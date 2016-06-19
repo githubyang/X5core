@@ -2,7 +2,7 @@ apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion 23
-    buildToolsVersion "23.0.2"
+    buildToolsVersion "23.0.1"
 
     defaultConfig {
         applicationId "cn.qing.app.x5demo"
@@ -20,6 +20,7 @@ android {
     sourceSets {
         main {
             assets.srcDirs = ['assets']
+            res.srcDirs=['src/main/res']
         }
     }
 }
@@ -30,4 +31,5 @@ dependencies {
     testCompile 'junit:junit:4.12'
     compile 'com.android.support:appcompat-v7:23.0.1'
     compile 'com.android.support:design:23.0.1'
+    compile 'org.apache.httpcomponents:httpcore:4.4.4'
 }

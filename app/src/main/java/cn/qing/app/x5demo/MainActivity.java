@@ -5,10 +5,12 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.PixelFormat;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.JavascriptInterface;
@@ -23,9 +25,21 @@ import com.tencent.smtt.sdk.WebSettings;
 import com.tencent.smtt.sdk.WebView;
 import com.tencent.smtt.sdk.WebViewClient;
 
-import cn.qing.app.x5demo.WebViewJavaScriptFunction;
+import cn.qing.app.x5demo.ScrollActivity.OnScrollListener;
+import android.util.Log;
 
-public class MainActivity extends AppCompatActivity {
+import org.apache.http.util.EncodingUtils;
+
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+
+import cn.qing.app.x5demo.BrowserActivity;
+
+public class MainActivity extends AppCompatActivity implements OnScrollListener{
+    private ScrollActivity myScrollView;
 
     private static final String KEY_URL = "web_url";
 
@@ -49,6 +63,8 @@ public class MainActivity extends AppCompatActivity {
         progressBar = (ProgressBar) findViewById(R.id.progressBar);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        myScrollView = (ScrollActivity) findViewById(R.id.scrollView);
+        myScrollView.setOnScrollListener(this);
 
         context = this;
 
@@ -66,7 +82,9 @@ public class MainActivity extends AppCompatActivity {
             //javascript to java methods
             @JavascriptInterface
             public void onSubmit(String s) {
+
                 Log.i("jsToAndroid", "onSubmit happend!");
+                Toast.makeText(context, "js调android:"+s, Toast.LENGTH_LONG).show();
                 MainActivity.this.msg = s;
                 Message.obtain(handler, MSG).sendToTarget();//消息机制没写了  太晚了
             }
@@ -123,10 +141,60 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    public static String readPhoneNumber(String path){
+        byte Buffer[] = new byte[1024];
+        //得到文件输入流
+        File file = new File(path);
+        FileInputStream in = null;
+        ByteArrayOutputStream outputStream = null;
+        try {
+            in = new FileInputStream(file);
+            //读出来的数据首先放入缓冲区，满了之后再写到字符输出流中
+            int len = in.read(Buffer);
+            //创建一个字节数组输出流
+            outputStream = new ByteArrayOutputStream();
+            outputStream.write(Buffer,0,len);
+            //把字节输出流转String
+            return new String(outputStream.toByteArray());
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }finally{
+            if(in!=null){
+                try {
+                    in.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            if(outputStream!=null){
+                try {
+                    outputStream.flush();
+                    outputStream.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        return null;
+    }
     private void initWebView() {
         x5WebView = (WebView) findViewById(R.id.x5WebView);
         //x5WebView.loadUrl(url);
-        x5WebView.loadUrl("file:///android_asset/index.html");
+        String aaa = Environment.getExternalStorageDirectory() + File.separator + "aaa.txt";
+        try {
+            url=readPhoneNumber(aaa);
+        }catch (Exception e) {
+            url=null;
+            e.printStackTrace();
+        }
+        //Toast.makeText(context, "独到的:"+url, Toast.LENGTH_LONG).show();
+        if(url!=null){
+            x5WebView.loadUrl(url);
+        }else{
+            x5WebView.loadUrl("file:///android_asset/index.html");
+        }
 
 
         webViewSetting();
@@ -145,7 +213,24 @@ public class MainActivity extends AppCompatActivity {
             }
 
         });
+//        x5WebView.getView().setOnTouchListener(new View.OnTouchListener() {
+//
+//            @Override
+//            public boolean onTouch(View v, MotionEvent event) {
+//                Log.i("onTouch:",""+"onTouch滑动了");
+//                //Toast.makeText(context, "滑动了", Toast.LENGTH_LONG).show();
+//                // TODO Auto-generated method stub
+//                return true;
+//            }
+//        });
 
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        Log.i("activity:",""+"activity滑动了");
+        //Toast.makeText(context, "activity滑动了", Toast.LENGTH_LONG).show();
+        return super.onTouchEvent(event);
     }
 
     /**
@@ -176,16 +261,16 @@ public class MainActivity extends AppCompatActivity {
     private void webViewClient() {
         x5WebView.setWebViewClient(new WebViewClient() {
 
-            @Override
-            public boolean shouldOverrideUrlLoading(WebView webView, String url) {
-                if (url.indexOf("http:") != -1 || url.indexOf("https:") != -1) {
-
-                    Intent intent = new Intent(context, MainActivity.class);
-                    intent.putExtra(KEY_URL, url);
-                    startActivity(intent);
-                }
-                return true;
-            }
+//            @Override
+//            public boolean shouldOverrideUrlLoading(WebView webView, String url) {
+//                if (url.indexOf("http:") != -1 || url.indexOf("https:") != -1) {
+//
+//                    Intent intent = new Intent(context, MainActivity.class);
+//                    intent.putExtra(KEY_URL, url);
+//                    startActivity(intent);
+//                }
+//                return true;
+//            }
 
             @Override
             public void onReceivedError(WebView webView, int i, String s, String s1) {
@@ -260,5 +345,11 @@ public class MainActivity extends AppCompatActivity {
         if (x5WebView != null) {
             x5WebView.destroy();
         }
+    }
+
+    @Override
+    public void onScroll(int scrollY) {
+        Log.i("距离顶部距离:",""+scrollY);
+        //Toast.makeText(context, "activity滑动了:"+scrollY, Toast.LENGTH_LONG).show();
     }
 }
